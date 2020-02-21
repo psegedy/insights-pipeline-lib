@@ -204,9 +204,9 @@ private def runPipeline(
 
     openShiftUtils.collectLogs(project: project)
 
-    stage("Wipe test environment") {
-        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-    }
+    // stage("Wipe test environment") {
+    //     sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+    // }
 
     junit "junit.xml"
 
