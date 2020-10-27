@@ -136,37 +136,36 @@ private def wipeNamespace(project) {
 private def runDeployStages(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
     ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
-    scaleFirstSetOnly, parallelBuild, parameters
+    scaleFirstSetOnly, parallelBuild
 ) {
-    openShiftUtils.withNode(parameters) {
-        // check out e2e-deploy
-        stage("Check out e2e-deploy") {
-            gitUtils.checkOutRepo(
-                targetDir: pipelineVars.e2eDeployDir,
-                repoUrl: pipelineVars.e2eDeployRepo,
-                credentialsId: "InsightsDroidGitHubHTTP"
+    // check out e2e-deploy
+    stage("Check out e2e-deploy") {
+        gitUtils.checkOutRepo(
+            targetDir: pipelineVars.e2eDeployDir,
+            repoUrl: "https://github.com/psegedy/e2e-deploy.git",
+            branch: "vuln-cyndi-smoke",
+            credentialsId: "InsightsDroidGitHubHTTP"
+        )
+        dir(pipelineVars.e2eDeployDir) {
+            sh "pip install -r requirements.txt"
+        }
+    }
+
+    wipeNamespace(project)
+
+    try {
+        dir(pipelineVars.e2eDeployDir) {
+            deployEnvironment(
+                refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
+                ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly,
+                parallelBuild
             )
-            dir(pipelineVars.e2eDeployDir) {
-                sh "pip install -r requirements.txt"
-            }
         }
-
-        wipeNamespace(project)
-
-        try {
-            dir(pipelineVars.e2eDeployDir) {
-                deployEnvironment(
-                    refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
-                    ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly,
-                    parallelBuild
-                )
-            }
-            return true
-        } catch (err) {
-            echo("Hit error during deploy!")
-            echo(err.toString())
-            return false
-        }
+        return true
+    } catch (err) {
+        echo("Hit error during deploy!")
+        echo(err.toString())
+        return false
     }
 }
 
@@ -211,7 +210,7 @@ private def runPipeline(
                 }
             }
 
-            wipeNamespace(project)
+            // wipeNamespace(project)
         }
 
         stage("Final result") {
