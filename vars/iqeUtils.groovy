@@ -348,10 +348,22 @@ private def writeVaultEnvVars(Map options) {
 
 
 private def configIQE(Map options) {
-    /* Sets up the settings.local.yaml and .env files */
-    def settingsDir = "${env.WORKSPACE}/iqe_local_settings"
-    sh "rm -fr ${settingsDir}"
-    sh "mkdir -p ${settingsDir}"
+    /* Sets up .env files */
+    sh "rm -f \"${env.WORKSPACE}/.env\""
+    writeEnv('ENV_FOR_DYNACONF', options['envName'])
+
+    writeVaultEnvVars(options)
+    options['extraEnvVars'].each { key, value ->
+        writeEnv(key, value)
+    }
+}
+
+private def configIQEPlugin(Map options, String plugin) {
+    /* Sets up the settings.local.yaml of iqe plugin */
+     settingsDir = sh(
+        script: "find /iqe_venv/lib -type d -name conf | grep ${plugin}",
+        returnStdout: true
+    ).trim()
 
     if (options['settingsFromGit']) {
         getSettingsFromGit(
@@ -364,15 +376,6 @@ private def configIQE(Map options) {
     }
     else if (options['settingsFileCredentialsId']) {
         getSettingsFromJenkinsSecret(options['settingsFileCredentialsId'], settingsDir)
-    }
-
-    sh "rm -f \"${env.WORKSPACE}/.env\""
-    writeEnv('ENV_FOR_DYNACONF', options['envName'])
-    writeEnv('IQE_TESTS_LOCAL_CONF_PATH', settingsDir)
-
-    writeVaultEnvVars(options)
-    options['extraEnvVars'].each { key, value ->
-        writeEnv(key, value)
     }
 }
 
@@ -400,6 +403,10 @@ private def createTestStages(String appName, Map appConfig) {
 
         stage("Install iqe-${plugin}-plugin") {
             sh "iqe plugin install ${plugin}"
+        }
+
+        stage("Configure iqe-${plugin}-plugin") {
+            configIQEPlugin(appOptions, plugin)
         }
     }
 
