@@ -142,8 +142,9 @@ private def runDeployStages(
     stage("Check out e2e-deploy") {
         gitUtils.checkOutRepo(
             targetDir: pipelineVars.e2eDeployDir,
-            repoUrl: pipelineVars.e2eDeployRepo,
-            credentialsId: "InsightsDroidGitHubHTTP"
+            repoUrl: "https://github.com/psegedy/e2e-deploy",
+            credentialsId: "InsightsDroidGitHubHTTP",
+            branch: "rbac-stable"
         )
         dir(pipelineVars.e2eDeployDir) {
             sh "pip install -r requirements.txt"
