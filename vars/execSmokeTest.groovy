@@ -209,7 +209,7 @@ private def runPipeline(
                 }
             }
 
-            wipeNamespace(project)
+            // wipeNamespace(project)
         }
 
         stage("Final result") {
